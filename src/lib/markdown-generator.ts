@@ -38,31 +38,33 @@ export function generateTechnicalSpec(answers: Record<string, any>): string {
   });
 
   // --- HEADER ---
-  sections.push(`# Technical Specification: ${answers.projectName || "Untitled Project"}`);
-  sections.push(`**Date:** ${new Date().toLocaleDateString()} | **Status:** Draft`);
-  if (answers.elevatorPitch) {
-    sections.push(`> ${answers.elevatorPitch}`);
-  }
-
+  sections.push(`# Technical Specifications: `);
+  sections.push(`**App Name**: ${answers.projectName || "Untitled Project"} | **Date:** ${new Date().toLocaleDateString()} | **Status:** Draft`);
+  
   // --- 1. OVERVIEW ---
   sections.push(`## 1. Executive Summary`);
+  if (answers.elevatorPitch) {
+    sections.push(`**Objective:** ${answers.elevatorPitch}`);
+  }
   sections.push(`**Problem:** ${answers.problemStatement || "N/A"}`);
   sections.push(`**Target Audience:** ${answers.targetAudience || "N/A"}`);
-  // (Success Metrics question was removed from Master Questions, handling gracefully)
   
   // --- 2. SCOPE ---
   sections.push(`## 2. Scope & Constraints`);
   sections.push(`- **Stage:** ${answers.projectStage || "N/A"}`);
-  sections.push(`- **Timeline:** ${answers.timeline || "N/A"}`);
-  sections.push(`- **Platforms:** ${Array.isArray(answers.platforms) ? answers.platforms.join(", ") : (answers.platforms || "N/A")}`);
+  sections.push(`- **Platforms:** ${answers.platforms || "N/A"}`);
 
   // --- 3. UI/UX SYSTEM ---
   sections.push(`## 3. Design System`);
-  sections.push(`- **Aesthetic:** ${answers.designAesthetic || "N/A"}`);
-  sections.push(`- **Primary Color:** \`${answers.colorPalette || "N/A"}\``);
-  sections.push(`- **Typography:** ${answers.typography || "N/A"}`);
+  sections.push(`- **Design Intent:** ${answers.designIntent || "N/A"}`);
+  sections.push(`- **Visual Risk Tolerance:** ${answers.visualRiskTolerance || "N/A"}`);
+  sections.push(`- **Theme Mode:** ${answers.themeMode || "N/A"}`);
+  sections.push(`- **Primary Color:** \`${answers.primaryColor || "N/A"}\``);
+  sections.push(`- **Secondary Color:** \`${answers.secondaryColor || "N/A"}\``);
+  sections.push(`- **Typography:** Headlines: ${answers.headlineFont || "N/A"} / Body: ${answers.bodyFont || "N/A"}`);
   sections.push(`- **Icons:** ${answers.iconSet || "N/A"}`);
-  sections.push(`- **Component Library:** ${answers.componentSystem || "N/A"}`);
+  sections.push(`- **Component Library:** ${answers.componentLibrary || "N/A"}`);
+  sections.push(`- **Layout:** ${answers.layoutRequirement || "N/A"}`);
 
   // --- 4. FUNCTIONAL REQUIREMENTS ---
   sections.push(`## 4. Functional Specifications`);
@@ -89,14 +91,15 @@ export function generateTechnicalSpec(answers: Record<string, any>): string {
   
   sections.push(`### 5.3 Database`);
   sections.push(`- **Engine:** ${answers.dbEngine || "N/A"}`);
-  sections.push(`- **ORM:** ${answers.orm || "N/A"}`);
   sections.push(`- **Strategy:** ${answers.multiTenancy || "N/A"}`);
+  sections.push(`- **Retention:** ${answers.dataRetention || "N/A"}`);
 
   // ... (Data Schema section remains similar) ...
 
   // --- 7. INFRASTRUCTURE & OPS ---
   sections.push(`## 7. Infrastructure & Security`);
-  sections.push(`- **Hosting:** ${answers.hosting || "N/A"}`);
+  sections.push(`- **CI/CD:** ${answers.cicd || "N/A"}`);
+  
   if (answers.compliance && answers.compliance.length > 0) {
      sections.push(`- **Compliance:** ${answers.compliance.join(", ")}`);
   }

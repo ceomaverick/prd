@@ -10,6 +10,8 @@ export interface Question {
   options?: string[];
   placeholder?: string;
   optional?: boolean;
+  validation?: string; // Regex string
+  default?: string | boolean | string[];
   condition?: {
     field: string;
     value: string | boolean | string[];
@@ -41,8 +43,8 @@ export const MASTER_QUESTIONS: Question[] = [
   {
     id: "elevatorPitch",
     section: "Identity & Context",
-    label: "Elevator Pitch",
-    description: "Describe the app in 2-3 sentences focusing on the problem and solution.",
+    label: "Objective", // Renamed label to Objective based on sample output preference
+    description: "Describe the app's core objective in 2-3 sentences.",
     type: "textarea",
     placeholder: "A fleet management system that reduces fuel costs using AI-driven routing...",
     optional: true,
@@ -62,7 +64,7 @@ export const MASTER_QUESTIONS: Question[] = [
     description: "What is the specific pain point this app eliminates?",
     type: "textarea",
     placeholder: "Manual route planning takes 4 hours daily and results in 15% wasted fuel.",
-    optional: true,
+    // Compulsory now (removed optional: true)
   },
 
   // --- SECTION 2: SCOPE & STRATEGY ---
@@ -71,69 +73,113 @@ export const MASTER_QUESTIONS: Question[] = [
     section: "Scope & Strategy",
     label: "Project Stage",
     type: "select",
-    options: ["Proof of Concept (PoC)", "MVP (Minimum Viable Product)", "Scalable V1 Production"],
-  },
-  {
-    id: "timeline",
-    section: "Scope & Strategy",
-    label: "Timeline Constraints",
-    description: "What is the absolute 'must-ship' date?",
-    type: "text",
-    placeholder: "e.g., 3 months from kickoff",
-    optional: true,
+    options: ["MVP (Minimum Viable Product)", "Scalable V1 Production"],
   },
   {
     id: "platforms",
     section: "Scope & Strategy",
     label: "Target Platforms",
+    type: "select",
+    options: ["Web Application", "Web + Android and iOS Apps", "Only Android App", "Only iOS App"],
+    default: "Web Application",
+  },
+  {
+    id: "mobileTech",
+    section: "Scope & Strategy",
+    label: "Mobile Technology Stack",
     type: "multiselect",
-    options: ["Web (Desktop)", "Web (Mobile Responsive)", "Native iOS", "Native Android"],
+    options: ["React Native", "Flutter", "Native Jetpack based Kotlin App"],
+    condition: { field: "platforms", operator: "contains", value: "Android" }, 
   },
 
   // --- SECTION 3: UI/UX & DESIGN SYSTEM ---
   {
-    id: "designAesthetic",
+    id: "designIntent",
     section: "UI/UX & Design System",
-    label: "Design Aesthetic",
+    label: "Design Intent",
+    description: "Overall product feel and audience expectation.",
     type: "select",
-    options: ["Clean/Enterprise (Stripe-like)", "Playful/Bouncy (Duolingo-like)", "Brutalist/Bold", "Minimalist/SaaS"],
+    options: ["Consumer-grade", "Enterprise-grade", "Developer-first", "Brand-first"],
+    default: "Consumer-grade",
   },
   {
-    id: "colorPalette",
+    id: "visualRiskTolerance",
     section: "UI/UX & Design System",
-    label: "Brand Color & Mode",
-    description: "Primary brand color and theme preference.",
+    label: "Visual Risk Tolerance (VRT)",
+    description: "How conservative or expressive the UI can be.",
+    type: "select",
+    options: ["Conservative", "Balanced", "Experimental"],
+    default: "Balanced",
+  },
+  {
+    id: "primaryColor",
+    section: "UI/UX & Design System",
+    label: "Primary Color",
     type: "text",
-    placeholder: "e.g., #3b82f6 (Blue) | System/Dark Mode support",
-    optional: true,
+    placeholder: "#3b82f6",
+    validation: "^#([0-9a-fA-F]{6})$",
+    description: "Hexadecimal code (e.g., #3b82f6)",
   },
   {
-    id: "typography",
+    id: "secondaryColor",
     section: "UI/UX & Design System",
-    label: "Typography Style",
+    label: "Secondary Color",
+    type: "text",
+    placeholder: "#22c55e",
+    validation: "^#([0-9a-fA-F]{6})$",
+    description: "Used for accents, highlights, and secondary actions.",
+  },
+  {
+    id: "themeMode",
+    section: "UI/UX & Design System",
+    label: "Theme Mode",
     type: "select",
-    options: ["Sans-serif (Inter/Geist)", "Serif (Playfair/Merriweather)", "Monospace (JetBrains/Roboto Mono)"],
+    options: ["Light only", "Dark only", "Light and Dark Modes"],
+    default: "Light only",
+  },
+  {
+    id: "headlineFont",
+    section: "UI/UX & Design System",
+    label: "Headline Font",
+    type: "select",
+    options: ["Plus Jakarta Sans", "Roboto", "Merriweather"],
+    default: "Plus Jakarta Sans",
+  },
+  {
+    id: "bodyFont",
+    section: "UI/UX & Design System",
+    label: "Body Font",
+    type: "select",
+    options: ["Inter", "Roboto", "Open Sans"],
+    default: "Inter",
   },
   {
     id: "iconSet",
     section: "UI/UX & Design System",
-    label: "Iconography Set",
+    label: "Icon Set",
     type: "select",
-    options: ["Lucide React", "Heroicons", "FontAwesome", "Phosphor Icons"],
+    options: ["Lucide React", "Heroicons", "Material Icons"],
+    default: "Lucide React",
   },
   {
-    id: "layoutStructure",
+    id: "layoutRequirement",
     section: "UI/UX & Design System",
-    label: "Layout Structure",
+    label: "Layout Requirement",
     type: "select",
-    options: ["Sidebar Navigation", "Top Navbar Only", "Dashboard Grid", "Hybrid"],
+    options: [
+      "Sidebar navigation with main content area",
+      "Top navigation with dashboard-style main content",
+      "Content-first layout",
+    ],
+    default: "Sidebar navigation with main content area",
   },
   {
-    id: "componentSystem",
+    id: "componentLibrary",
     section: "UI/UX & Design System",
-    label: "Component System Strategy",
+    label: "Component Library",
     type: "select",
-    options: ["shadcn/ui (Tailwind + Radix)", "Chakra UI", "Mantine", "Tailwind UI (Custom)"],
+    options: ["shadcn/ui", "Chakra UI", "Tailwind UI"],
+    default: "shadcn/ui",
   },
 
   // --- SECTION 4: FEATURES & FUNCTIONAL SPECS ---
@@ -178,7 +224,8 @@ export const MASTER_QUESTIONS: Question[] = [
     section: "Frontend Architecture",
     label: "Frontend Framework",
     type: "select",
-    options: ["Next.js (App Router)", "Next.js (Pages Router)", "React (Vite)", "Remix"],
+    options: ["Next.js (App Router)", "Next.js (Pages Router)", "React (Vite)"],
+    default: "Next.js (App Router)",
   },
   {
     id: "stylingEngine",
@@ -186,13 +233,15 @@ export const MASTER_QUESTIONS: Question[] = [
     label: "Styling Engine",
     type: "select",
     options: ["Tailwind CSS", "CSS Modules", "Styled Components", "SCSS"],
+    default: "Tailwind CSS",
   },
   {
     id: "stateManagement",
     section: "Frontend Architecture",
     label: "State Management Strategy",
     type: "select",
-    options: ["Zustand (Global)", "TanStack Query (Server State Only)", "React Context", "Redux Toolkit"],
+    options: ["React Standard", "Zustand (Global)", "React Context", "Redux Toolkit"],
+    default: "React Standard",
   },
   {
     id: "formHandling",
@@ -200,6 +249,7 @@ export const MASTER_QUESTIONS: Question[] = [
     label: "Form Handling & Validation",
     type: "select",
     options: ["React Hook Form + Zod", "Formik + Yup", "Native Forms"],
+    default: "React Hook Form + Zod",
   },
 
   // --- SECTION 6: BACKEND & API ARCHITECTURE ---
@@ -208,7 +258,8 @@ export const MASTER_QUESTIONS: Question[] = [
     section: "Backend & API Architecture",
     label: "Backend Runtime",
     type: "select",
-    options: ["Node.js (TypeScript)", "Node.js (JavaScript)", "Go", "Python (FastAPI)", "Edge Runtime"],
+    options: ["Node.js (TypeScript)", "Go", "Python (FastAPI)", "Edge Runtime"],
+    default: "Node.js (TypeScript)",
   },
   {
     id: "apiStyle",
@@ -216,19 +267,15 @@ export const MASTER_QUESTIONS: Question[] = [
     label: "API Architecture",
     type: "select",
     options: ["REST (OpenAPI/JSON)", "tRPC (Type-safe)", "GraphQL", "Server Actions Only"],
+    default: "REST (OpenAPI/JSON)",
   },
   {
     id: "authStrategy",
     section: "Backend & API Architecture",
     label: "Authentication Strategy",
     type: "select",
-    options: ["Clerk (Managed)", "Auth.js/NextAuth (Self-hosted)", "Supabase Auth", "Custom JWT"],
-  },
-  {
-    id: "realtimeNeeds",
-    section: "Backend & API Architecture",
-    label: "Real-time Requirements",
-    type: "boolean",
+    options: ["Clerk (Managed)", "Auth.js/NextAuth (Self-hosted)", "Supabase Auth", "Simple Username and Password"],
+    default: "Simple Username and Password",
   },
 
   // --- SECTION 7: DATA MODELING ---
@@ -237,14 +284,7 @@ export const MASTER_QUESTIONS: Question[] = [
     section: "Data Modeling",
     label: "Database Engine",
     type: "select",
-    options: ["PostgreSQL", "MySQL", "SQLite", "MongoDB"],
-  },
-  {
-    id: "orm",
-    section: "Data Modeling",
-    label: "ORM / Query Builder",
-    type: "select",
-    options: ["Drizzle ORM", "Prisma", "Kysely", "Raw SQL"],
+    options: ["Neon DB", "Supabase DB", "MongoDB"],
   },
   {
     id: "multiTenancy",
@@ -268,6 +308,7 @@ export const MASTER_QUESTIONS: Question[] = [
     label: "Required Third-Party Modules",
     type: "multiselect",
     options: ["Payments (Stripe/Lemon)", "File Storage (S3/R2)", "Email (Resend/SendGrid)", "None"],
+    default: ["None"],
   },
   {
     id: "paymentDetail",
@@ -288,31 +329,12 @@ export const MASTER_QUESTIONS: Question[] = [
 
   // --- SECTION 9: SECURITY & INFRASTRUCTURE ---
   {
-    id: "hosting",
-    section: "Security & Infrastructure",
-    label: "Deployment Platform",
-    type: "select",
-    options: ["Vercel", "AWS", "Fly.io", "Railway", "DigitalOcean"],
-  },
-  {
-    id: "rateLimiting",
-    section: "Security & Infrastructure",
-    label: "API Rate Limiting Needed?",
-    type: "boolean",
-  },
-  {
     id: "compliance",
     section: "Security & Infrastructure",
     label: "Compliance Requirements",
     type: "multiselect",
     options: ["GDPR", "SOC2", "HIPAA", "None"],
-  },
-  {
-    id: "monitoring",
-    section: "Security & Infrastructure",
-    label: "Monitoring & Error Tracking",
-    type: "multiselect",
-    options: ["Sentry (Errors)", "Axiom (Logs)", "PostHog (Analytics)", "Datadog"],
+    default: ["GDPR"],
   },
   {
     id: "cicd",
@@ -320,5 +342,6 @@ export const MASTER_QUESTIONS: Question[] = [
     label: "CI/CD Pipeline",
     type: "select",
     options: ["GitHub Actions", "Vercel Auto-deploy", "GitLab CI", "Manual"],
+    default: "Vercel Auto-deploy",
   },
 ];

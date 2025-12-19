@@ -31,7 +31,7 @@ export default function DashboardLayout({
         <div className="flex h-16 items-center px-8 max-w-[1800px] mx-auto justify-between">
           
           {/* Left: Logo Area */}
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold min-w-[200px]">
+          <Link href="/" className="flex items-center gap-2 font-semibold min-w-[200px]">
              <div className="bg-primary text-primary-foreground p-1 rounded-md">
                 <FileText className="h-4 w-4" />
              </div>
@@ -39,9 +39,15 @@ export default function DashboardLayout({
           </Link>
 
           {/* Center: Navigation */}
-          <nav className="flex items-center justify-center flex-1">
-             <Link href="/dashboard" className="text-sm font-medium transition-colors hover:text-primary">
+          <nav className="flex items-center justify-center flex-1 gap-6">
+             <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
                Dashboard
+             </Link>
+             <Link href="/landing" className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground">
+               Landing
+             </Link>
+             <Link href="/examples" className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground">
+               Examples
              </Link>
           </nav>
 
@@ -57,7 +63,6 @@ export default function DashboardLayout({
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8 border">
-                        <AvatarImage src="" alt="User" />
                         <AvatarFallback>N</AvatarFallback>
                       </Avatar>
                     </Button>

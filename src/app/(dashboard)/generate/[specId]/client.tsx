@@ -42,7 +42,9 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
   const defaultValues = useMemo(() => {
     const defaults: Record<string, any> = {};
     MASTER_QUESTIONS.forEach(q => {
-      if (q.type === "multiselect") {
+      if (q.default !== undefined) {
+        defaults[q.id] = q.default;
+      } else if (q.type === "multiselect") {
         defaults[q.id] = [];
       } else if (q.type === "boolean") {
         defaults[q.id] = null;
@@ -50,14 +52,15 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
         defaults[q.id] = "";
       }
     });
-    return { ...defaults, ...initialData };
+    return { _meta_completed: [], ...defaults, ...initialData };
   }, [initialData]);
 
   const form = useForm<Record<string, any>>({
-    defaultValues
+    defaultValues,
+    mode: "onChange"
   });
 
-  const { control, watch } = form;
+  const { control, watch, formState: { errors }, setValue } = form;
   const formValues = watch();
 
   // Save to DB
@@ -84,7 +87,9 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
       if (!q.condition) return true;
       const parentValue = formValues[q.condition.field];
       if (q.condition.operator === "contains") {
-        return Array.isArray(parentValue) && parentValue.includes(q.condition.value);
+        if (Array.isArray(parentValue)) return parentValue.includes(q.condition.value);
+        if (typeof parentValue === "string") return parentValue.includes(q.condition.value as string);
+        return false;
       }
       if (q.condition.operator === "equals") {
         return parentValue === q.condition.value;
@@ -118,7 +123,11 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
       const visibleSectionQuestions = sectionQuestions.filter(q => {
         if (!q.condition) return true;
         const parentValue = formValues[q.condition.field];
-        if (q.condition.operator === "contains") return Array.isArray(parentValue) && parentValue.includes(q.condition.value);
+        if (q.condition.operator === "contains") {
+          if (Array.isArray(parentValue)) return parentValue.includes(q.condition.value);
+          if (typeof parentValue === "string") return parentValue.includes(q.condition.value as string);
+          return false;
+        }
         if (q.condition.operator === "equals") return parentValue === q.condition.value;
         if (q.condition.operator === "not_equals") return parentValue !== q.condition.value;
         return true;
@@ -127,11 +136,8 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
       const total = visibleSectionQuestions.length;
       
       const answered = visibleSectionQuestions.filter(q => {
-        const val = formValues[q.id];
-        if (Array.isArray(val)) return val.length > 0;
-        if (typeof val === "boolean") return val !== null;
-        if (typeof val === "string") return val.trim().length > 0;
-        return !!val;
+        const completed = formValues._meta_completed || [];
+        return completed.includes(q.id);
       }).length;
       
       stats[section] = {
@@ -144,12 +150,48 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(formValues)]);
 
+  // ... (rest of the component)
+
   const handleNext = async () => {
+    const currentId = currentQuestion.id;
+    const currentVal = formValues[currentId];
+    
+    // Check if empty
+    const isEmpty = 
+        currentVal === "" || 
+        currentVal === null || 
+        currentVal === undefined || 
+        (Array.isArray(currentVal) && currentVal.length === 0);
+
+    // Update completed questions list
+    const currentCompleted = formValues._meta_completed || [];
+    let newCompleted = currentCompleted;
+    if (!currentCompleted.includes(currentId)) {
+        newCompleted = [...currentCompleted, currentId];
+        setValue("_meta_completed", newCompleted);
+    }
+
+    if (isEmpty && currentQuestion.default !== undefined) {
+        // Set the value in the form state
+        setValue(currentId, currentQuestion.default, { shouldValidate: true, shouldDirty: true });
+        
+        // Save to DB with new value AND new completed list
+        await saveToDb({ 
+            ...formValues, 
+            [currentId]: currentQuestion.default,
+            _meta_completed: newCompleted 
+        });
+    } else {
+        // Save current state with new completed list
+        await saveToDb({
+            ...formValues,
+            _meta_completed: newCompleted
+        });
+    }
+
     if (currentQuestionIndex < filteredQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Save immediately on finish
-      await saveToDb(formValues);
       router.push(`/preview/${specId}`);
     }
   };
@@ -167,34 +209,50 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
         debouncedSave({ ...formValues, [question.id]: val });
     };
 
+    // Helper: Determine display value (User Value -> Default -> Empty)
+    // We only use default for display if value is missing/empty
+    const displayValue = field.value !== "" && field.value !== null && field.value !== undefined 
+        ? field.value 
+        : question.default;
+
     switch (question.type) {
       case "text":
-        return <Input {...field} onChange={(e) => handleChange(e.target.value)} className="text-base p-3 h-10 bg-background" placeholder={question.placeholder} />;
+        return <Input {...field} onChange={(e) => handleChange(e.target.value)} className="text-base p-3 h-10 bg-background" placeholder={question.placeholder || (typeof question.default === 'string' ? question.default : undefined)} />;
       case "textarea":
-        return <Textarea {...field} onChange={(e) => handleChange(e.target.value)} className="min-h-[120px] text-base p-3 bg-background" placeholder={question.placeholder} />;
+        return <Textarea {...field} onChange={(e) => handleChange(e.target.value)} className="min-h-[120px] text-base p-3 bg-background" placeholder={question.placeholder || (typeof question.default === 'string' ? question.default : undefined)} />;
       case "select":
         return (
-          <RadioGroup onValueChange={handleChange} value={field.value} className="grid grid-cols-1 gap-2">
+          <RadioGroup onValueChange={handleChange} value={displayValue} className="grid grid-cols-1 gap-2">
             {question.options?.map((option) => (
               <div key={option} className="relative">
                  <RadioGroupItem value={option} id={option} className="peer sr-only" />
                  <Label htmlFor={option} className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-muted/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 transition-all cursor-pointer">
                    <span className="text-sm font-medium">{option}</span>
-                   {field.value === option && <Check className="h-4 w-4 text-primary" />}
+                   {displayValue === option && <Check className="h-4 w-4 text-primary" />}
                  </Label>
               </div>
             ))}
           </RadioGroup>
         );
       case "multiselect":
+        const currentValues = (Array.isArray(field.value) && field.value.length > 0) 
+            ? field.value 
+            : (Array.isArray(question.default) ? question.default : []);
+            
         return (
           <div className="grid grid-cols-1 gap-2">
             {question.options?.map((option) => {
-              const currentValues = Array.isArray(field.value) ? field.value : [];
               const isChecked = currentValues.includes(option);
               return (
                 <div key={option} onClick={() => {
-                    const newValue = isChecked ? currentValues.filter((v: string) => v !== option) : [...currentValues, option];
+                    // Logic needs to handle editing the *real* field value, starting from default if needed
+                    // If field is empty, we start with default + toggle
+                    const baseValues = (Array.isArray(field.value) && field.value.length > 0) ? field.value : (Array.isArray(question.default) ? question.default : []);
+                    
+                    const newValue = baseValues.includes(option) 
+                        ? baseValues.filter((v: string) => v !== option) 
+                        : [...baseValues, option];
+                        
                     handleChange(newValue);
                   }} className={`flex items-center justify-between p-4 rounded-lg border transition-all cursor-pointer ${isChecked ? "border-primary bg-primary/5" : "border-muted bg-background hover:bg-muted/50"}`}>
                   <span className="text-sm font-medium">{option}</span>
@@ -208,7 +266,7 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
         );
       case "boolean":
         return (
-          <RadioGroup onValueChange={(val) => handleChange(val === "yes")} value={field.value === true ? "yes" : field.value === false ? "no" : undefined} className="grid grid-cols-2 gap-4">
+          <RadioGroup onValueChange={(val) => handleChange(val === "yes")} value={displayValue === true ? "yes" : displayValue === false ? "no" : undefined} className="grid grid-cols-2 gap-4">
              <div className="relative">
                  <RadioGroupItem value="yes" id="yes" className="peer sr-only" />
                  <Label htmlFor="yes" className="flex flex-col items-center justify-center p-6 rounded-lg border bg-background hover:bg-muted/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 transition-all cursor-pointer">
@@ -303,8 +361,24 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
           <div className="py-2" key={currentQuestion.id}>
             <Controller 
               control={control} 
-              name={currentQuestion.id} 
-              render={({ field }) => renderInput(field, currentQuestion)} 
+              name={currentQuestion.id}
+              rules={{
+                required: !currentQuestion.optional,
+                pattern: currentQuestion.validation ? {
+                  value: new RegExp(currentQuestion.validation),
+                  message: "Invalid format"
+                } : undefined
+              }}
+              render={({ field, fieldState }) => (
+                <div className="space-y-2">
+                  {renderInput(field, currentQuestion)}
+                  {fieldState.error && (
+                    <p className="text-sm font-medium text-red-500">
+                      {fieldState.error.message || "This field is required"}
+                    </p>
+                  )}
+                </div>
+              )} 
             />
           </div>
 
@@ -320,6 +394,9 @@ export default function GenerateSpecClient({ specId, initialData }: GenerateSpec
             <Button 
               onClick={handleNext}
               disabled={(() => {
+                // If there is a validation error, disable next
+                if (errors[currentQuestion.id]) return true;
+
                 const val = formValues[currentQuestion.id];
                 let hasValue = false;
                 if (Array.isArray(val)) hasValue = val.length > 0;

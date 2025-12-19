@@ -1,4 +1,3 @@
-
 // This file acts as the knowledge base for generating technical specs.
 // It maps specific choices to technical implementation details.
 
@@ -68,6 +67,28 @@ export const BLUEPRINTS: Record<string, Record<string, TechBlueprint>> = {
         "Use async/await for all I/O operations.",
       ],
     },
+    "Go": {
+      title: "Go (Golang)",
+      description: "High-performance compiled language.",
+      envVars: ["PORT", "GO_ENV"],
+      packages: [], // Go uses go.mod, not npm
+      requiredFiles: ["go.mod", "main.go"],
+      technicalConstraints: [
+        "Use 'net/http' or 'gin/echo' for routing.",
+        "Implement graceful shutdown for the server.",
+      ],
+    },
+    "Python (FastAPI)": {
+      title: "Python FastAPI",
+      description: "Modern, fast (high-performance), web framework for building APIs with Python.",
+      envVars: ["PORT", "PYTHON_ENV"],
+      packages: [], // Python uses requirements.txt
+      requiredFiles: ["requirements.txt", "main.py"],
+      technicalConstraints: [
+        "Use Pydantic models for data validation.",
+        "Leverage async/await for non-blocking I/O.",
+      ],
+    },
   },
 
   // --- AUTHENTICATION ---
@@ -123,43 +144,61 @@ model User {
 }
       `,
     },
+    "Simple Username and Password": {
+      title: "Basic JWT Authentication",
+      description: "Custom implementation using bcrypt and JWT.",
+      envVars: ["JWT_SECRET"],
+      packages: ["jsonwebtoken", "bcryptjs", "zod"],
+      requiredFiles: ["lib/auth.ts", "middleware.ts"],
+      technicalConstraints: [
+        "Hash passwords using bcrypt (salt rounds >= 10).",
+        "Store JWT in HTTP-Only cookies for security.",
+        "Implement rate limiting on login endpoints.",
+      ],
+      schemaSnippet: `
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed
+  createdAt DateTime @default(now())
+}
+      `,
+    },
   },
 
   // --- DATABASE ---
   dbEngine: {
-    "PostgreSQL": {
-      title: "PostgreSQL",
-      description: "Relational Database System.",
+    "Neon DB": {
+      title: "Neon (Serverless Postgres)",
+      description: "Serverless Postgres with branching.",
       envVars: ["DATABASE_URL", "DIRECT_URL (for migration)"],
-      packages: ["pg"],
+      packages: ["pg", "@neondatabase/serverless"],
       requiredFiles: [],
       technicalConstraints: [
-        "Use connection pooling (PgBouncer) for Serverless environments.",
-        "Index all Foreign Keys and frequently queried columns.",
+        "Use connection pooling for Serverless environments.",
+        "Use '@neondatabase/serverless' driver for Edge compatibility.",
       ],
     },
-  },
-  orm: {
-    "Prisma": {
-      title: "Prisma ORM",
-      description: "Next-generation Node.js and TypeScript ORM.",
-      envVars: [],
-      packages: ["prisma", "@prisma/client"],
-      requiredFiles: ["prisma/schema.prisma"],
+    "Supabase DB": {
+      title: "Supabase (Postgres)",
+      description: "Open source Firebase alternative.",
+      envVars: ["DATABASE_URL", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"],
+      packages: ["@supabase/supabase-js"],
+      requiredFiles: ["lib/supabase.ts"],
       technicalConstraints: [
-        "Do not import PrismaClient in 'use client' components.",
-        "Instantiate a singleton PrismaClient instance to prevent connection exhaustion in dev.",
+        "Enable Row Level Security (RLS) on all tables.",
+        "Use the Supabase client for client-side data fetching where appropriate.",
       ],
     },
-    "Drizzle ORM": {
-      title: "Drizzle ORM",
-      description: "Lightweight TypeScript ORM.",
-      envVars: ["DATABASE_URL"],
-      packages: ["drizzle-orm", "drizzle-kit", "postgres"],
-      requiredFiles: ["drizzle.config.ts", "src/db/schema.ts"],
+    "MongoDB": {
+      title: "MongoDB",
+      description: "NoSQL Database.",
+      envVars: ["MONGODB_URI"],
+      packages: ["mongoose", "mongodb"],
+      requiredFiles: ["lib/db.ts"],
       technicalConstraints: [
-        "Separate schema definition from connection logic.",
-        "Use 'migrate' command in CI/CD pipeline.",
+        "Define Mongoose schemas for type safety.",
+        "Handle connection caching in Serverless environments (e.g. Next.js).",
       ],
     },
   },

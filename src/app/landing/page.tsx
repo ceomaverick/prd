@@ -28,8 +28,8 @@ export default function LandingPage() {
           <Link href="#how-it-works" className="hover:text-primary transition-colors">How it Works</Link>
         </nav>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-sm font-medium hover:underline hidden sm:block">
-            Log in
+          <Link href="/" className="text-sm font-medium hover:underline hidden sm:block">
+            Dashboard
           </Link>
           <Button onClick={handleStart}>Start Free</Button>
         </div>

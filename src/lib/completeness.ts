@@ -9,7 +9,9 @@ export function calculateCompleteness(data: any): number {
     
     const parentValue = data[q.condition.field];
     if (q.condition.operator === "contains") {
-      return Array.isArray(parentValue) && parentValue.includes(q.condition.value);
+      if (Array.isArray(parentValue)) return parentValue.includes(q.condition.value);
+      if (typeof parentValue === "string") return parentValue.includes(q.condition.value as string);
+      return false;
     }
     if (q.condition.operator === "equals") {
       return parentValue === q.condition.value;
