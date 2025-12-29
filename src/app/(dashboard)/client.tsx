@@ -72,9 +72,9 @@ export default function DashboardClient({ initialProjects }: DashboardClientProp
   };
 
   return (
-    <div className="flex flex-col gap-8 p-8 max-w-[1600px] mx-auto">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="p-8 max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+      {/* Left Column: Stats Cards */}
+      <div className="flex flex-col gap-6 lg:col-span-1">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Specs</CardTitle>
@@ -95,20 +95,10 @@ export default function DashboardClient({ initialProjects }: DashboardClientProp
             <p className="text-xs text-muted-foreground">Estimated savings</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Drafts</CardTitle>
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{initialProjects.length > 0 ? "Active" : "None"}</div>
-            <p className="text-xs text-muted-foreground">Work in progress</p>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Projects Table */}
-      <Card>
+      {/* Right Column: Projects Table */}
+      <Card className="lg:col-span-3 h-fit">
         <CardHeader>
           <CardTitle>Your Documents</CardTitle>
           <CardDescription>
@@ -121,14 +111,13 @@ export default function DashboardClient({ initialProjects }: DashboardClientProp
               <TableRow>
                 <TableHead>Document Name</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {initialProjects.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                     No specs found. Create one to get started!
                   </TableCell>
                 </TableRow>
@@ -145,15 +134,6 @@ export default function DashboardClient({ initialProjects }: DashboardClientProp
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(project.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {(() => {
-                        const pct = calculateCompleteness(project.content);
-                        if (pct === 100) {
-                          return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">Completed</Badge>;
-                        }
-                        return <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50">Draft ({pct}%)</Badge>;
-                      })()}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

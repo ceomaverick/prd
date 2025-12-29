@@ -3,12 +3,9 @@
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
-import { Download, Copy, Check, Pencil, FileText, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Download, Copy, Check } from "lucide-react";
 import { generateTechnicalSpec } from "@/lib/markdown-generator";
-import { Badge } from "@/components/ui/badge";
-import { calculateCompleteness } from "@/lib/completeness";
 
 interface PreviewClientProps {
   specId: string;
@@ -22,8 +19,12 @@ export default function PreviewClient({ specId, projectData }: PreviewClientProp
   useEffect(() => {
     if (projectData && Object.keys(projectData).length > 0) {
       try {
-        const generated = generateTechnicalSpec(projectData);
-        setMarkdown(generated);
+        if (projectData.generatedMarkdown) {
+          setMarkdown(projectData.generatedMarkdown);
+        } else {
+          const generated = generateTechnicalSpec(projectData);
+          setMarkdown(generated);
+        }
       } catch (e) {
         console.error("Failed to generate spec markdown", e);
         setMarkdown("Error generating specification.");
@@ -51,97 +52,44 @@ export default function PreviewClient({ specId, projectData }: PreviewClientProp
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const completeness = calculateCompleteness(projectData);
-
   return (
-    <div className="flex flex-col gap-8 p-6 md:p-8 max-w-[1600px] mx-auto h-[calc(100vh-4rem)]">
-      {/* Header Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-           <div className="flex items-center gap-3">
-             <h1 className="text-3xl font-bold tracking-tight">Technical Specification</h1>
-             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-               <Sparkles className="w-3 h-3 mr-1" /> Ready for Dev
-             </Badge>
-           </div>
-           <p className="text-muted-foreground mt-1">
-             Generated based on {projectData ? Object.keys(projectData).length : 0} architectural decisions.
-           </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/generate/${specId}`}>
-            <Button variant="outline">
-              <Pencil className="w-4 h-4 mr-2" /> Continue Editing
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-muted/30 p-4 md:p-8">
+      {/* Centered Container */}
+      <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col overflow-hidden shadow-lg rounded-xl border bg-background">
+        
+        {/* Artifact Header */}
+        <div className="bg-muted/30 border-b py-3 px-4 md:px-6 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+             {/* Window Controls */}
+             <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                <div className="w-3 h-3 rounded-full bg-green-400/80" />
+             </div>
+             <span className="font-mono text-sm text-muted-foreground">{specId}.md</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="h-8 text-xs font-medium" onClick={handleCopy}>
+              {copied ? <Check className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
+              {copied ? "Copied" : "Copy"}
             </Button>
-          </Link>
-          <Button variant="outline" onClick={handleCopy}>
-            {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-            {copied ? "Copied" : "Copy Markdown"}
-          </Button>
-          <Button onClick={handleDownload}>
-            <Download className="w-4 h-4 mr-2" />
-            Download .md
-          </Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs font-medium" onClick={handleDownload}>
+              <Download className="w-3.5 h-3.5 mr-2" />
+              Download
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Main Preview Area */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 overflow-hidden">
-        {/* Sidebar Summary */}
-        <Card className="hidden lg:flex flex-col h-full col-span-1 border-none shadow-none bg-white">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-              Spec Health
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-             <div>
-               <div className="flex justify-between text-sm mb-2 font-medium">
-                 <span>Completeness</span>
-                 <span>{completeness}%</span>
-               </div>
-               <div className="h-2 bg-muted rounded-full overflow-hidden">
-                 <div 
-                   className="h-full bg-primary transition-all duration-500" 
-                   style={{ width: `${completeness}%` }} 
-                 />
-               </div>
-             </div>
-             
-             <div className="space-y-4 pt-4 border-t">
-               <div className="flex items-center gap-3 text-sm">
-                 <div className="p-2 bg-blue-100 text-blue-700 rounded-md">
-                   <FileText className="w-4 h-4" />
-                 </div>
-                 <div>
-                   <p className="font-medium text-foreground">Format</p>
-                   <p className="text-muted-foreground text-xs">GitHub Flavored Markdown</p>
-                 </div>
-               </div>
-             </div>
-          </CardContent>
-        </Card>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-white">
+           <div className="prose prose-slate dark:prose-invert max-w-none">
+              <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
+                {markdown}
+              </div>
+           </div>
+        </div>
 
-        {/* Markdown Viewer */}
-        <Card className="flex flex-col col-span-3 overflow-hidden border-none shadow-none bg-white">
-          <CardHeader className="bg-muted/30 border-b py-3 px-6 flex flex-row items-center justify-between">
-            <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400/80" />
-              <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
-              <div className="w-3 h-3 rounded-full bg-green-400/80" />
-            </div>
-            <span className="font-mono text-xs text-muted-foreground">{specId}-spec.md</span>
-          </CardHeader>
-          <CardContent className="flex-1 p-0 overflow-y-auto bg-white">
-            <div className="p-8 md:p-12 max-w-4xl mx-auto">
-               <div className="prose prose-slate dark:prose-invert max-w-none">
-                  <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
-                    {markdown}
-                  </div>
-               </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

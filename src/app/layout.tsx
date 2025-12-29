@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PRD Generator",
-  description: "Generate technical product requirement documents in minutes for solo developers.",
+  title: "SpeckAI",
+  description: "Generate technical specs in seconds with AI",
 };
 
 export default function RootLayout({

@@ -1,5 +1,5 @@
 import React from "react";
-import DashboardClient from "./client";
+import DashboardClient from "../client"; // Adjusted import path
 import { getSpecs } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
