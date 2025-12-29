@@ -58,7 +58,7 @@ export default function AIForm() {
         toast.success("Specification generated successfully!");
         router.push(`/preview/${result.specId}`);
       } else {
-        toast.error("Generation failed. Please try again.");
+        toast.error(result.error || "Generation failed. Please try again.");
       }
     } catch (err) {
       toast.error("An error occurred");
